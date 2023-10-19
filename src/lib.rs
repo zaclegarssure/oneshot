@@ -339,6 +339,16 @@ impl<T> Sender<T> {
             _invariant: PhantomData,
         }
     }
+
+    /// Returns `true` if the receiving end has been disconnected.
+    pub fn is_canceled(&self) -> bool {
+        // SAFETY: The channel exists on the heap for the entire duration of this method and we
+        // only ever acquire shared references to it. Note that if the receiver disconnects it
+        // does not free the channel.
+        let channel = unsafe { self.channel_ptr.as_ref() };
+
+        channel.state.load(Relaxed) != DISCONNECTED
+    }
 }
 
 impl<T> Drop for Sender<T> {
